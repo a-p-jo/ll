@@ -9,55 +9,84 @@
  * Declare an instance as the first member in your node struct,
  * to derive from these and use the below functions. 
  */
-typedef struct SingleLink { struct SingleLink *nxt; } SingleLink;
+typedef struct SingleLink { struct SingleLink *nxt; }       SingleLink;
 typedef struct DoubleLink { struct DoubleLink *nxt, *prv; } DoubleLink;
 
-#define SingleLink_INIT ( (SingleLink) {NULL}       )
-#define DoubleLink_INIT ( (DoubleLink) {NULL, NULL} )
+/* Constant expression default initialzers. */
+#define SingleLink_INIT (SingleLink){0}
+#define DoubleLink_INIT (DoubleLink){0}
 
-#define _m_(s, T, m)                 ( (void *)((T *)s)->m )
-#define _for_n_(begin, cnt, n, T, m) for ((cnt) = 0; (begin) && (cnt) < (n); (begin) = _m_(begin, T, m), (cnt)++)
-#define _until_(begin, end, T, m)    for (; (begin) && (void *)(begin) != (void *)(end); (begin) = _m_(begin, T, m))
-
-/* Iterates over [begin, begin+n) or [begin,EOL) if n is out of range,
- * where EOL is one-past-the-end of the list.
+/* Iterates "n" times from "begin" until (but excluding) the "n"th node,
+ * or until the list ends, incrementing "cnt" each time.
+ *
+ * Where,
+ * "begin" is a modifiable pointer lvalue to a SingleLink/DoubleLink object,
+ * or to an aggregate that contains such an object as it's first member.
+ * "cnt" is a modifiable integer lvalue.
+ * "n" is a unsigned integer rvalue.
  */
-#define SingleLink_for_n(begin, cnt, n)      _for_n_(begin, cnt, n, SingleLink, nxt)
-#define DoubleLink_for_n(begin, cnt, n)      _for_n_(begin, cnt, n, DoubleLink, nxt)
-#define DoubleLink_for_n_back(begin, cnt, n) _for_n_(begin, cnt, n, DoubleLink, prv)
+#define SingleLink_for_n(begin, cnt, n)     \
+	for (cnt = 0; begin && cnt < (n); begin = (void *)((SingleLink *)begin)->nxt, cnt++)
+#define DoubleLink_for_n(begin, cnt, n)     \
+	for (cnt = 0; begin && cnt < (n); begin = (void *)((DoubleLink *)begin)->nxt, cnt++)
+#define DoubleLink_for_n_back(begin, cnt, n) \
+	for (cnt = 0; begin && cnt < (n); begin = (void *)((DoubleLink *)begin)->prv, cnt++)
 
-/* Iterates over [begin, end) or [begin,EOL) if end is not found. */
-#define SingleLink_until(begin, end)         _until_(begin, end, SingleLink, nxt)
-#define DoubleLink_until(begin, end)         _until_(begin, end, DoubleLink, nxt)
-#define DoubleLink_until_back(begin, end)    _until_(begin, end, DoubleLink, prv)
-
-/* Iterates from [begin, EOL). */
-#define SingleLink_for_all(begin)            SingleLink_until(begin, NULL)
-#define DoubleLink_for_all(begin)            DoubleLink_until(begin, NULL)
-#define DoubleLink_for_all_back(begin)       DoubleLink_until_back(begin, NULL)
-
-/* Returns nth node after begin, or NULL if n is out of range. 
- * If n is 0, returns last node.
+/* Iterates from "begin" until reaching (but excluding) the "end" node,
+ * or until the list ends.
+ *
+ * Where,
+ * "begin" is as specified for *_for_n() macros.
+ * "end" is a pointer rvalue to a SingleLink/DoubleLink object,
+ * or to an aggregate that contains such an object as it's first member.
  */
-SingleLink *SingleLink_get(const SingleLink *begin, uintmax_t n_nodes);
-DoubleLink *DoubleLink_get(const DoubleLink *begin, uintmax_t n_nodes, bool reverse);
+#define SingleLink_until(begin, end)     \
+	for (; begin && (void *)begin != (void *)end; begin = (void *)((SingleLink *)begin)->nxt)
+#define DoubleLink_until(begin, end)     \
+	for (; begin && (void *)begin != (void *)end; begin = (void *)((DoubleLink *)begin)->nxt)
+#define DoubleLink_until_back(begin, end) \
+	for (; begin && (void *)begin != (void *)end; begin = (void *)((DoubleLink *)begin)->prv)
 
-/* Returns number of nodes in [begin, end] or -1 if end is not found.
- * If end is NULL, returns number of nodes in [begin, EOL).
+/* Iterates from "begin" for all nodes in the list.
+ *
+ * Where,
+ * "begin" is as specified for *_for_n() macros.
+ */
+#define SingleLink_for_all(begin)      SingleLink_until(begin, NULL)
+#define DoubleLink_for_all(begin)      DoubleLink_until(begin, NULL)
+#define DoubleLink_for_all_back(begin) DoubleLink_until_back(begin, NULL)
+
+/* Returns nth node after begin, or NULL if n is out-of-bounds.
+ * If n is 0, returns last node in list.
+ *
+ * O(n) time and O(1) space complexity.
+ */
+SingleLink *SingleLink_get(const SingleLink *begin, uintmax_t n);
+DoubleLink *DoubleLink_get(const DoubleLink *begin, uintmax_t n, bool reverse);
+
+/* Returns number of nodes between begin and end (excluding begin)
+ * or -1 if end is not found.
+ * If end is NULL, returns number of nodes from begin onwards till end of list.
+ *
+ * O(n) time and O(1) space complexity.
  */
 intmax_t SingleLink_len(const SingleLink *begin, const SingleLink *end);
 /* If reverse is true, iterates in reverse from begin to find end */
 intmax_t DoubleLink_len(const DoubleLink *begin, const DoubleLink *end, bool reverse);
 
-/* Inserts the range [src_begin, src_end] between dst & dst->nxt.
- * src_end may not preceed src_begin and the source range must not overlap
- * with the destination range [dst, dst+1].
+/* Inserts the range [src_begin, src_end] after dst.
+ * src_end must not preceed src_begin and the source range must not overlap
+ * with the destination range [dst, dst->nxt].
+ *
+ * O(1) space & time complexity.
  */
 void SingleLink_insert(SingleLink *dst, SingleLink *src_begin, SingleLink *src_end);
 void DoubleLink_insert(DoubleLink *dst, DoubleLink *src_begin, DoubleLink *src_end);
 
-/* Removes (begin, end] from begin.
+/* Removes all nodes till end (including end) after begin.
  * end must not preceed begin.
+ *
+ * O(1) space & time complexity.
  */
 void SingleLink_remove(SingleLink *begin, SingleLink *end);
 void DoubleLink_remove(DoubleLink *begin, DoubleLink *end);
@@ -65,12 +94,22 @@ void DoubleLink_remove(DoubleLink *begin, DoubleLink *end);
 /* Swaps [a_begin, a_end] and [b_begin, b_end]
  * a_end must not preceed a_begin, b_end must not preceed b_begin.
  * Neither ranges may overlap with each other.
+ *
+ * O(1) space & time complexity.
  */
-void SingleLink_swap(SingleLink *a_begin_prv, SingleLink *a_begin, SingleLink *a_end, SingleLink *b_begin_prv, SingleLink *b_begin, SingleLink *b_end);
-void DoubleLink_swap(DoubleLink *a_begin, DoubleLink *a_end, DoubleLink *b_begin, DoubleLink *b_end);
+void SingleLink_swap(
+		SingleLink *a_begin_prv, SingleLink *a_begin, SingleLink *a_end,
+		SingleLink *b_begin_prv, SingleLink *b_begin, SingleLink *b_end
+);
+void DoubleLink_swap(
+		DoubleLink *a_begin, DoubleLink *a_end,
+		DoubleLink *b_begin, DoubleLink *b_end
+);
 
 /* Transforms [begin, end] to [end, begin] in-place.
  * end must not preceed begin.
+ *
+ * O(n) time and O(1) space complexity.
  */
 void SingleLink_reverse(SingleLink *begin_prv, SingleLink *begin, SingleLink *end);
 void DoubleLink_reverse(DoubleLink *begin, DoubleLink *end);

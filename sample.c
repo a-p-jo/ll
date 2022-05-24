@@ -1,93 +1,85 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <assert.h>
+#include <alloca.h>
 #include "ll.h"
 
 #define LEN(A) (sizeof(A) / sizeof(A[0]))
 
 enum {ELNUM = 11};
 
-typedef struct {
-        DoubleLink lnk;
-        size_t val;
-} inode;
+#define listprint(nodeT, l) do {        \
+	nodeT *L = (nodeT *)(l);        \
+	SingleLink_for_all (L)          \
+		printf("%zu ", L->val); \
+	putchar('\n');                  \
+} while(0)
 
-static void ilst_print(const inode *l)
-{
-        DoubleLink_for_all(l)
-                printf("%zu ", l->val);
-        putchar('\n');
-}
-
-static inline void *nxt(const void *l) { return ((DoubleLink *)l)->nxt; }
+#define nxt(node) (void *)((node).nxt)
 
 static void DoubleLink_test(void)
 {
-        puts("DoubleLink_test()...");
-        inode *head = &(inode){.lnk = DoubleLink_INIT};
+        typedef struct { DoubleLink lnk; size_t val; } dlnode;
+
+	puts("DoubleLink_test()...");
+
+	dlnode *head = &(dlnode) {.lnk = DoubleLink_INIT};
         DoubleLink *p = &head->lnk;
-        inode buf[ELNUM];
-        for (size_t i = 0; i < LEN(buf); i++, p = p->nxt) {
-                buf[i] = (inode) {DoubleLink_INIT, i};
-                DoubleLink_insert(p, &buf[i].lnk, &buf[i].lnk);      
+        for (size_t i = 0; i < ELNUM; i++, p = p->nxt) {
+		dlnode *node = alloca(sizeof(*node));
+                *node = (dlnode) {DoubleLink_INIT, i};
+                DoubleLink_insert(p, &node->lnk, &node->lnk);
         }
-        head = nxt(&head->lnk);
+
+        head = nxt(head->lnk);
         puts("Original List :");
-        ilst_print(head);
+        listprint(dlnode, head);
 
-        puts("Reversed :");
         DoubleLink_reverse(&head->lnk, p);
-        ilst_print((inode *)p);
+	puts("Reversed :");
+        listprint(dlnode, p);
 
-        puts("3rd element deleted : ");
         DoubleLink_remove(DoubleLink_get(p, 1, false), DoubleLink_get(p, 2, false));
-        ilst_print((inode *)p);
+	puts("3rd element deleted : ");
+	listprint(dlnode, p);
 
-        puts("First and second element swapped :");
         DoubleLink *newp = p->nxt;
         DoubleLink_swap(p, p, p->nxt, p->nxt);
-        ilst_print((inode *)newp);
-}
-
-typedef struct { 
-        SingleLink lnk;
-        size_t val;
-} sinode;
-
-static void silst_print(const sinode *l)
-{
-        SingleLink_for_all(l)
-                printf("%zu ", l->val);
-        putchar('\n');
+	puts("First and second element swapped :");
+	listprint(dlnode, newp);
 }
 
 static void SingleLink_test(void)
 {
-        puts("SingleLink_test()...");
-        sinode *head = &(sinode){.lnk = SingleLink_INIT};
+        typedef struct { SingleLink lnk; size_t val; } slnode;
+
+	puts("SingleLink_test()...");
+
+        slnode *head = &(slnode) {.lnk = SingleLink_INIT};
         SingleLink *p = &head->lnk;
-        sinode buf[ELNUM];
-        for (size_t i = 0; i < LEN(buf); i++, p = p->nxt) {
-                buf[i] = (sinode) {SingleLink_INIT, i};
-                SingleLink_insert(p, &buf[i].lnk, &buf[i].lnk);      
+        for (size_t i = 0; i < ELNUM; i++, p = p->nxt) {
+		slnode *node = alloca(sizeof(*node));
+                *node = (slnode) {SingleLink_INIT, i};
+		SingleLink_insert(p, &node->lnk, &node->lnk);      
         }
-        head = nxt(&head->lnk);
+
+        head = nxt(head->lnk);
         puts("Original List :");
-        silst_print(head);
+        listprint(slnode, head);
 
         SingleLink_reverse(NULL, &head->lnk, p);
         puts("Reversed :");
-        silst_print((sinode *)p);
+        listprint(slnode, p);
 
         SingleLink_remove(SingleLink_get(p, 1), SingleLink_get(p, 2));
         puts("3rd element deleted : ");
-        silst_print((sinode *)p);
+        listprint(slnode, p);
 
         
         SingleLink *newp = p->nxt;
         SingleLink_swap(NULL, p, p, p, p->nxt, p->nxt);
         puts("First and second element swapped :");
-        silst_print((sinode *)newp);
+        listprint(slnode, newp);
 }
 
 int main(void)

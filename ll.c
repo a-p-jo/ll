@@ -95,7 +95,8 @@ void DoubleLink_insert(DoubleLink *dst, DoubleLink *begin, DoubleLink *end)
         assert(dst && begin && end && DoubleLink_len(begin, end, false) >= 0);
 
         end->nxt = dst->nxt;
-        /* If dst->nxt is NULL, dst is the tail node; there are none after it to update. 
+        /* If dst->nxt is NULL, dst is the tail node;
+	 * there are none after it to update. 
          * Otherwise, update the prv of the node after dst.
          */
         if (dst->nxt)
@@ -118,8 +119,10 @@ void DoubleLink_remove(DoubleLink *begin, DoubleLink *end)
                 end->nxt->prv = begin;
 }
 
-void DoubleLink_swap(DoubleLink *a_begin, DoubleLink *a_end, DoubleLink *b_begin, DoubleLink *b_end)
-{
+void DoubleLink_swap(
+		DoubleLink *a_begin, DoubleLink *a_end, 
+		DoubleLink *b_begin, DoubleLink *b_end
+) {
         assert(
                 a_begin && a_end && b_begin && b_end
                 && DoubleLink_len(a_begin, a_end, false) >= 0
@@ -141,7 +144,8 @@ void DoubleLink_swap(DoubleLink *a_begin, DoubleLink *a_end, DoubleLink *b_begin
                 b_end->nxt->prv = a_end;
 
         DoubleLink *tmp = a_begin->prv;
-        /* If a_begin and b_begin are consecutive (range a is a singleton consecutive to b),
+        /* If a_begin and b_begin are consecutive 
+	 * (range a is a singleton consecutive to b),
          * exchanging their prv will cause a circular link.
          * Instead, make b_begin the node preceeding a_begin.
          */
@@ -162,8 +166,10 @@ void DoubleLink_swap(DoubleLink *a_begin, DoubleLink *a_end, DoubleLink *b_begin
                 b_end->nxt = a_end;
 }
 
-void SingleLink_swap(SingleLink *a_begin_prv, SingleLink *a_begin, SingleLink *a_end, SingleLink *b_begin_prv, SingleLink *b_begin, SingleLink *b_end)
-{
+void SingleLink_swap(
+		SingleLink *a_begin_prv, SingleLink *a_begin, SingleLink *a_end,
+		SingleLink *b_begin_prv, SingleLink *b_begin, SingleLink *b_end
+) {
         assert(
                 a_begin && a_end && b_begin && b_end
                 && a_begin_prv? a_begin_prv->nxt == a_begin : true
@@ -188,8 +194,10 @@ void DoubleLink_reverse(DoubleLink *left, DoubleLink *right)
 {
         assert(left && right && DoubleLink_len(left, right, false) >= 0);
 
-        /* Swap nodes from the left with corresponding nodes from the right, until the midpoint is reached.
-         * Do not test for premature end of list. If this causes a NULL derefrence, the segfault/UB is well-deserved.
+        /* Swap nodes from the left with corresponding nodes from the right,
+	 * until the midpoint is reached.
+         * Do not test for premature end of list. 
+	 * If this causes a NULL derefrence, the segfault/UB is well-deserved.
          */
         while (left != right) {
                 DoubleLink *nxt = left->nxt, *prv = right->prv;
@@ -208,7 +216,10 @@ void DoubleLink_reverse(DoubleLink *left, DoubleLink *right)
 
 void SingleLink_reverse(SingleLink *begin_prv, SingleLink *begin, SingleLink *end)
 {
-        assert(begin && end && begin_prv? begin_prv->nxt == begin : true && SingleLink_len(begin, end) >= 0);
+        assert(
+			begin && end && begin_prv? begin_prv->nxt == begin : true
+			&& SingleLink_len(begin, end) >= 0
+	);
         /* The loop assumes a range > 1 node */
         if (begin == end)
                 return;
@@ -216,9 +227,12 @@ void SingleLink_reverse(SingleLink *begin_prv, SingleLink *begin, SingleLink *en
         if (begin_prv)
                 begin_prv->nxt = end;
         /* For each node in the range, set it's nxt to the node preceeding it */
-        for (SingleLink *prv = begin_prv, *cur = begin, *nxt = cur->nxt ;; prv = cur, cur = nxt, nxt = nxt->nxt) {
+        for (
+			SingleLink *prv = begin_prv, *cur = begin, *nxt = cur->nxt ;;
+			prv = cur, cur = nxt, nxt = nxt->nxt
+	) {
                 cur->nxt = prv;
-                if (cur == end) /* As range is inclusive of end node, loop must only break after setting it too */
+                if (cur == end) /* Range includes end; loop must set it too */
                         break;
         }
 }
