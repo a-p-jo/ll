@@ -16,8 +16,8 @@ typedef struct DoubleLink { struct DoubleLink *nxt, *prv; } DoubleLink;
 #define SingleLink_INIT (SingleLink){0}
 #define DoubleLink_INIT (DoubleLink){0}
 
-/* Iterates "n" times from "begin" until (but excluding) the "n"th node,
- * or until the list ends, incrementing "cnt" each time.
+/* Iterates "n" times from "begin" until (but excluding) the "n"th node.
+ * UB if < n-1 nodes follow.
  *
  * Where,
  * "begin" is a modifiable pointer lvalue to a SingleLink/DoubleLink object,
@@ -26,14 +26,14 @@ typedef struct DoubleLink { struct DoubleLink *nxt, *prv; } DoubleLink;
  * "n" is a unsigned integer rvalue.
  */
 #define SingleLink_for_n(begin, cnt, n)     \
-	for (cnt = 0; begin && cnt < (n); begin = (void *)((SingleLink *)begin)->nxt, cnt++)
+	for (cnt = 0; cnt < (n); begin = (void *)((SingleLink *)begin)->nxt, cnt++)
 #define DoubleLink_for_n(begin, cnt, n)     \
-	for (cnt = 0; begin && cnt < (n); begin = (void *)((DoubleLink *)begin)->nxt, cnt++)
+	for (cnt = 0; cnt < (n); begin = (void *)((DoubleLink *)begin)->nxt, cnt++)
 #define DoubleLink_for_n_back(begin, cnt, n) \
-	for (cnt = 0; begin && cnt < (n); begin = (void *)((DoubleLink *)begin)->prv, cnt++)
+	for (cnt = 0; cnt < (n); begin = (void *)((DoubleLink *)begin)->prv, cnt++)
 
-/* Iterates from "begin" until reaching (but excluding) the "end" node,
- * or until the list ends.
+/* Iterates from "begin" until reaching (but excluding) the "end" node.
+ * UB if "end" does not follow.
  *
  * Where,
  * "begin" is as specified for *_for_n() macros.
@@ -41,11 +41,11 @@ typedef struct DoubleLink { struct DoubleLink *nxt, *prv; } DoubleLink;
  * or to an aggregate that contains such an object as it's first member.
  */
 #define SingleLink_until(begin, end)     \
-	for (; begin && (void *)begin != (void *)end; begin = (void *)((SingleLink *)begin)->nxt)
+	for (; (void *)begin != (void *)end; begin = (void *)((SingleLink *)begin)->nxt)
 #define DoubleLink_until(begin, end)     \
-	for (; begin && (void *)begin != (void *)end; begin = (void *)((DoubleLink *)begin)->nxt)
+	for (; (void *)begin != (void *)end; begin = (void *)((DoubleLink *)begin)->nxt)
 #define DoubleLink_until_back(begin, end) \
-	for (; begin && (void *)begin != (void *)end; begin = (void *)((DoubleLink *)begin)->prv)
+	for (; (void *)begin != (void *)end; begin = (void *)((DoubleLink *)begin)->prv)
 
 /* Iterates from "begin" for all nodes in the list.
  *
